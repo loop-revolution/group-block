@@ -3,20 +3,20 @@ use block_tools::{
 	display_api::{
 		component::{
 			card::{error_card, CardComponent, CardHeader, Icon},
-			input::InputComponent,
 			stack::{StackComponent, StackDirection},
-			text::{TextComponent, TextPreset},
+			text::TextComponent,
 			DisplayComponent, WrappedComponent,
 		},
 		CreationObject, DisplayMeta, DisplayObject, PageMeta,
 	},
 	dsl::prelude::*,
-	models::{Block, MinNewBlock, NewBlock, Property},
+	models::{Block, MinNewBlock, Property},
 	schema::{blocks, properties},
 	BlockError, Error,
 };
 use serde::{Deserialize, Serialize};
-use types_delegate::display::delegate_embed_display;
+
+use crate::delegation::display::delegate_embed_display;
 pub struct GroupBlock {}
 
 pub const BLOCK_NAME: &'static str = "group";
@@ -155,7 +155,7 @@ fn embed_display(block: &Block, context: &Context) -> Result<Box<dyn DisplayComp
 }
 
 impl GroupBlock {
-	pub fn create(conn: &PgConnection, owner_id: i32) -> Result<Block, Error> {
+	pub fn new(conn: &PgConnection, owner_id: i32) -> Result<Block, Error> {
 		MinNewBlock {
 			block_type: "group",
 			owner_id,
