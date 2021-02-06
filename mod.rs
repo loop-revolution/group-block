@@ -78,10 +78,16 @@ impl BlockType for GroupBlock {
 			None => "Untitled Group".into(),
 		};
 
-		let items: Vec<WrappedComponent> = items
+		let mut items: Vec<WrappedComponent> = items
 			.into_iter()
 			.map(|block| WrappedComponent::from(delegate_embed_display(&block, context)))
 			.collect();
+
+		if items.len() == 0 {
+			items.push(WrappedComponent::from(Box::new(TextComponent::new(
+				"No items in group",
+			))))
+		}
 
 		let content = StackComponent {
 			direction: StackDirection::Fit,
@@ -137,10 +143,16 @@ fn embed_display(block: &Block, context: &Context) -> Result<Box<dyn DisplayComp
 		None => "Untitled Group".into(),
 	};
 
-	let items: Vec<WrappedComponent> = items
+	let mut items: Vec<WrappedComponent> = items
 		.into_iter()
 		.map(|block| WrappedComponent::from(delegate_embed_display(&block, context)))
 		.collect();
+
+	if items.len() == 0 {
+		items.push(WrappedComponent::from(Box::new(TextComponent::new(
+			"No items in group",
+		))))
+	}
 
 	let content = StackComponent {
 		direction: StackDirection::Fit,
