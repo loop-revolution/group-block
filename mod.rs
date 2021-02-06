@@ -24,6 +24,7 @@ pub const BLOCK_NAME: &'static str = "group";
 fn group_properties(
 	block_id: i64,
 	conn: &PgConnection,
+	name_only: bool,
 ) -> Result<(Option<Block>, Vec<Block>), Error> {
 	let block_properties: Vec<Property> = properties::dsl::properties
 		.filter(properties::dsl::parent_id.eq(block_id))
@@ -39,7 +40,7 @@ fn group_properties(
 				.limit(1)
 				.get_result(conn)
 				.optional()?;
-		} else if property.property_name == "item" {
+		} else if property.property_name == "item" && name_only == false {
 			let block: Option<Block> = blocks::dsl::blocks
 				.filter(blocks::id.eq(property.value_id))
 				.limit(1)
@@ -69,7 +70,7 @@ impl BlockType for GroupBlock {
 
 	fn page_display(block: &Block, context: &Context) -> Result<DisplayObject, Error> {
 		let conn = &context.pool.get()?;
-		let (name, items) = group_properties(block.id, conn)?;
+		let (name, items) = group_properties(block.id, conn, false)?;
 
 		let name = name.and_then(|block| block.block_data);
 
@@ -124,6 +125,15 @@ impl BlockType for GroupBlock {
 			_ => Err(BlockError::MethodExist(name, Self::name()).into()),
 		}
 	}
+
+	fn block_name(block: &Block, context: &Context) -> Result<String, Error> {
+		let conn = &context.pool.get()?;
+		let (name, _) = group_properties(block.id, conn, true)?;
+		Ok(match name.and_then(|block| block.block_data) {
+			Some(data) => data,
+			None => "Group Block".to_string(),
+		})
+	}
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -134,7 +144,7 @@ struct CreationArgs {
 
 fn embed_display(block: &Block, context: &Context) -> Result<Box<dyn DisplayComponent>, Error> {
 	let conn = &context.pool.get()?;
-	let (name, items) = group_properties(block.id, conn)?;
+	let (name, items) = group_properties(block.id, conn, false)?;
 
 	let name = name.and_then(|block| block.block_data);
 
