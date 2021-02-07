@@ -1,4 +1,5 @@
 use block_tools::{
+	auth::{optional_token, optional_validate_token, permissions::can_view},
 	blocks::{BlockType, Context, TypeInfo},
 	display_api::{
 		component::{
@@ -24,6 +25,7 @@ pub const BLOCK_NAME: &'static str = "group";
 fn group_properties(
 	block_id: i64,
 	conn: &PgConnection,
+	user_id: Option<i32>,
 	name_only: bool,
 ) -> Result<(Option<Block>, Vec<Block>), Error> {
 	let block_properties: Vec<Property> = properties::dsl::properties
@@ -52,6 +54,18 @@ fn group_properties(
 		}
 	}
 
+	if let Some(block) = name {
+		if !can_view(user_id, &block) {
+			name = None;
+		} else {
+			name = Some(block)
+		}
+	}
+	items = items
+		.into_iter()
+		.filter(|block| can_view(user_id, block))
+		.collect();
+
 	Ok((name, items))
 }
 
@@ -70,7 +84,8 @@ impl BlockType for GroupBlock {
 
 	fn page_display(block: &Block, context: &Context) -> Result<DisplayObject, Error> {
 		let conn = &context.pool.get()?;
-		let (name, items) = group_properties(block.id, conn, false)?;
+		let user_id = optional_validate_token(optional_token(context))?;
+		let (name, items) = group_properties(block.id, conn, user_id, false)?;
 
 		let name = name.and_then(|block| block.block_data);
 
@@ -128,7 +143,8 @@ impl BlockType for GroupBlock {
 
 	fn block_name(block: &Block, context: &Context) -> Result<String, Error> {
 		let conn = &context.pool.get()?;
-		let (name, _) = group_properties(block.id, conn, true)?;
+		let user_id = optional_validate_token(optional_token(context))?;
+		let (name, _) = group_properties(block.id, conn, user_id, true)?;
 		Ok(match name.and_then(|block| block.block_data) {
 			Some(data) => data,
 			None => "Group Block".to_string(),
@@ -144,7 +160,8 @@ struct CreationArgs {
 
 fn embed_display(block: &Block, context: &Context) -> Result<Box<dyn DisplayComponent>, Error> {
 	let conn = &context.pool.get()?;
-	let (name, items) = group_properties(block.id, conn, false)?;
+	let user_id = optional_validate_token(optional_token(context))?;
+	let (name, items) = group_properties(block.id, conn, user_id, false)?;
 
 	let name = name.and_then(|block| block.block_data);
 
