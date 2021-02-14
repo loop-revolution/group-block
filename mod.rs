@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize};
 use crate::delegation::display::delegate_embed_display;
 pub struct GroupBlock {}
 
-pub const BLOCK_NAME: &'static str = "group";
+pub const BLOCK_NAME: &str = "group";
 
 fn group_properties(
 	block_id: i64,
@@ -42,7 +42,7 @@ fn group_properties(
 				.limit(1)
 				.get_result(conn)
 				.optional()?;
-		} else if property.property_name == "item" && name_only == false {
+		} else if property.property_name == "item" && !name_only {
 			let block: Option<Block> = blocks::dsl::blocks
 				.filter(blocks::id.eq(property.value_id))
 				.limit(1)
@@ -99,7 +99,7 @@ impl BlockType for GroupBlock {
 			.map(|block| WrappedComponent::from(delegate_embed_display(&block, context)))
 			.collect();
 
-		if items.len() == 0 {
+		if items.is_empty() {
 			items.push(WrappedComponent::from(Box::new(TextComponent::new(
 				"No items in group",
 			))))
@@ -136,9 +136,7 @@ impl BlockType for GroupBlock {
 		_block_id: i64,
 		_args: String,
 	) -> Result<Block, Error> {
-		match name.as_str() {
-			_ => Err(BlockError::MethodExist(name, Self::name()).into()),
-		}
+		Err(BlockError::MethodExist(name, Self::name()).into())
 	}
 
 	fn block_name(block: &Block, context: &Context) -> Result<String, Error> {
@@ -175,7 +173,7 @@ fn embed_display(block: &Block, context: &Context) -> Result<Box<dyn DisplayComp
 		.map(|block| WrappedComponent::from(delegate_embed_display(&block, context)))
 		.collect();
 
-	if items.len() == 0 {
+	if items.is_empty() {
 		items.push(WrappedComponent::from(Box::new(TextComponent::new(
 			"No items in group",
 		))))
@@ -194,7 +192,7 @@ fn embed_display(block: &Block, context: &Context) -> Result<Box<dyn DisplayComp
 }
 
 impl GroupBlock {
-	pub fn new(conn: &PgConnection, owner_id: i32) -> Result<Block, Error> {
+	pub fn insert_new(conn: &PgConnection, owner_id: i32) -> Result<Block, Error> {
 		MinNewBlock {
 			block_type: "group",
 			owner_id,
