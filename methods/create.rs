@@ -1,7 +1,7 @@
 use block_tools::{
 	blocks::Context,
 	models::{Block, MinNewBlock},
-	BlockError, Error, NoAccessSubject, UserError,
+	BlockError, Error,
 };
 use serde::{Deserialize, Serialize};
 
@@ -20,39 +20,21 @@ pub fn create(input: String, context: &Context, user_id: i32) -> Result<Block, E
 	}
 	.insert(conn)?;
 
-	let name_block: Block;
-	if input.name.perform == "CONNECT" {
-		let id: i64 = input.name.data.parse().unwrap();
-		name_block = match Block::by_id(id, conn)? {
-			None => return Err(UserError::NoAccess(NoAccessSubject::ViewBlock(id)).into()),
-			Some(block) => block,
-		};
-	} else {
-		name_block = MinNewBlock {
-			block_type: data_block::BLOCK_NAME,
-			owner_id: user_id,
-		}
-		.into()
-		.data(&input.name.data)
-		.insert(conn)?;
+	let name_block = MinNewBlock {
+		block_type: data_block::BLOCK_NAME,
+		owner_id: user_id,
 	}
+	.into()
+	.data(&input.name)
+	.insert(conn)?;
 
-	let desc_block: Block;
-	if input.desc.perform == "CONNECT" {
-		let id: i64 = input.desc.data.parse().unwrap();
-		desc_block = match Block::by_id(id, conn)? {
-			None => return Err(UserError::NoAccess(NoAccessSubject::ViewBlock(id)).into()),
-			Some(block) => block,
-		};
-	} else {
-		desc_block = MinNewBlock {
-			block_type: data_block::BLOCK_NAME,
-			owner_id: user_id,
-		}
-		.into()
-		.data(&input.desc.data)
-		.insert(conn)?;
+	let desc_block = MinNewBlock {
+		block_type: data_block::BLOCK_NAME,
+		owner_id: user_id,
 	}
+	.into()
+	.data(&input.desc)
+	.insert(conn)?;
 
 	for item in input.items {
 		let id: i64 = item.id.parse().unwrap();
@@ -71,15 +53,9 @@ pub fn create(input: String, context: &Context, user_id: i32) -> Result<Block, E
 
 #[derive(Serialize, Deserialize, Debug)]
 struct CreationArgs {
-	name: DoData,
-	desc: DoData,
+	name: String,
+	desc: String,
 	items: Vec<Item>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct DoData {
-	perform: String,
-	data: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
