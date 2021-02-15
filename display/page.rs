@@ -1,5 +1,6 @@
 use crate::{
-	blocks::group_block::group_props::Properties, delegation::display::delegate_embed_display,
+	blocks::{data_block::edit_data_component, group_block::group_props::Properties},
+	delegation::display::delegate_embed_display,
 };
 use block_tools::{
 	auth::{optional_token, optional_validate_token},
@@ -29,7 +30,7 @@ pub fn page_display(block: &Block, context: &Context) -> Result<DisplayObject, E
 	let name = name
 		.and_then(|block| block.block_data)
 		.unwrap_or_else(|| "Untitled Group".into());
-	let description = description.and_then(|block| block.block_data);
+	let desc = description.clone().and_then(|block| block.block_data);
 	let items: Vec<WrappedComponent> = items
 		.into_iter()
 		.map(|block| WrappedComponent::from(delegate_embed_display(&block, context)))
@@ -45,8 +46,13 @@ pub fn page_display(block: &Block, context: &Context) -> Result<DisplayObject, E
 	};
 	let mut content = StackComponent::new(StackDirection::Vertical);
 
-	if let Some(description) = description {
-		content.push(box TextComponent::new(&description))
+	if let Some(desc) = desc {
+		let block = description.unwrap();
+		content.push(
+			box edit_data_component(block.id.to_string())
+				.label("Description")
+				.initial_value(&desc),
+		)
 	}
 	content.push(stack);
 
