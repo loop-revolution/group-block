@@ -27,7 +27,7 @@ pub fn embed_display(block: &Block, context: &Context) -> Result<Box<dyn Display
 
 	let name = name
 		.and_then(|block| block.block_data)
-		.unwrap_or("Untitled Group".into());
+		.unwrap_or_else(|| "Untitled Group".into());
 	let description = description.and_then(|block| block.block_data);
 	let items: Vec<WrappedComponent> = items
 		.iter()

@@ -41,7 +41,7 @@ impl BlockType for GroupBlock {
 		let name = Properties::build(block.id, user_id, conn)?
 			.name
 			.and_then(|block| block.block_data)
-			.unwrap_or("Group Block".into());
+			.unwrap_or_else(|| "Group Block".into());
 
 		Ok(name)
 	}

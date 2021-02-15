@@ -28,7 +28,7 @@ pub fn page_display(block: &Block, context: &Context) -> Result<DisplayObject, E
 
 	let name = name
 		.and_then(|block| block.block_data)
-		.unwrap_or("Untitled Group".into());
+		.unwrap_or_else(|| "Untitled Group".into());
 	let description = description.and_then(|block| block.block_data);
 	let items: Vec<WrappedComponent> = items
 		.into_iter()
@@ -50,8 +50,6 @@ pub fn page_display(block: &Block, context: &Context) -> Result<DisplayObject, E
 	}
 	content.push(stack);
 
-	Ok(
-		DisplayObject::new(box content)
-			.meta(DisplayMeta::default().page(PageMeta::new().header(&name))),
-	)
+	Ok(DisplayObject::new(box content)
+		.meta(DisplayMeta::default().page(PageMeta::new().header(&name))))
 }
