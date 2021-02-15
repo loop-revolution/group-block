@@ -40,7 +40,7 @@ impl Properties {
 					props.name = Block::by_id(property.value_id, conn)?
 						.filter(|block| can_view(user_id, block));
 				}
-				"description" => {
+				"desc" => {
 					props.description = Block::by_id(property.value_id, conn)?
 						.filter(|block| can_view(user_id, block));
 				}
