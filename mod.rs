@@ -1,74 +1,27 @@
 use block_tools::{
-	auth::{optional_token, optional_validate_token, permissions::can_view},
+	auth::{optional_token, optional_validate_token},
 	blocks::{BlockType, Context, TypeInfo},
 	display_api::{
 		component::{
-			card::{error_card, CardComponent, CardHeader, Icon},
-			stack::{StackComponent, StackDirection},
-			text::TextComponent,
-			DisplayComponent, WrappedComponent,
+			card::{error_card, Icon},
+			DisplayComponent,
 		},
-		CreationObject, DisplayMeta, DisplayObject, PageMeta,
+		CreationObject, DisplayObject,
 	},
 	dsl::prelude::*,
-	models::{Block, MinNewBlock, Property},
-	schema::{blocks, properties},
-	BlockError, Error,
+	models::{Block, MinNewBlock},
+	Error,
 };
-use serde::{Deserialize, Serialize};
-
-use crate::delegation::display::delegate_embed_display;
-pub struct GroupBlock {}
+use display::{create::create_display, embed::embed_display, page::page_display};
+use group_props::Properties;
+use methods::method_delegate;
+mod display;
+mod group_props;
+mod methods;
 
 pub const BLOCK_NAME: &str = "group";
 
-fn group_properties(
-	block_id: i64,
-	conn: &PgConnection,
-	user_id: Option<i32>,
-	name_only: bool,
-) -> Result<(Option<Block>, Vec<Block>), Error> {
-	let block_properties: Vec<Property> = properties::dsl::properties
-		.filter(properties::dsl::parent_id.eq(block_id))
-		.load::<Property>(conn)?;
-
-	let mut name: Option<Block> = None;
-	let mut items: Vec<Block> = vec![];
-
-	for property in block_properties {
-		if property.property_name == "name" {
-			name = blocks::dsl::blocks
-				.filter(blocks::id.eq(property.value_id))
-				.limit(1)
-				.get_result(conn)
-				.optional()?;
-		} else if property.property_name == "item" && !name_only {
-			let block: Option<Block> = blocks::dsl::blocks
-				.filter(blocks::id.eq(property.value_id))
-				.limit(1)
-				.get_result(conn)
-				.optional()?;
-			if let Some(block) = block {
-				items.push(block);
-			}
-		}
-	}
-
-	if let Some(block) = name {
-		if !can_view(user_id, &block) {
-			name = None;
-		} else {
-			name = Some(block)
-		}
-	}
-	items = items
-		.into_iter()
-		.filter(|block| can_view(user_id, block))
-		.collect();
-
-	Ok((name, items))
-}
-
+pub struct GroupBlock {}
 impl BlockType for GroupBlock {
 	fn name() -> String {
 		BLOCK_NAME.to_string()
@@ -82,113 +35,41 @@ impl BlockType for GroupBlock {
 		}
 	}
 
-	fn page_display(block: &Block, context: &Context) -> Result<DisplayObject, Error> {
-		let conn = &context.pool.get()?;
+	fn block_name(block: &Block, context: &Context) -> Result<String, Error> {
+		let conn = &context.conn()?;
 		let user_id = optional_validate_token(optional_token(context))?;
-		let (name, items) = group_properties(block.id, conn, user_id, false)?;
+		let name = Properties::build(block.id, user_id, conn)?
+			.name
+			.and_then(|block| block.block_data)
+			.unwrap_or("Group Block".into());
 
-		let name = name.and_then(|block| block.block_data);
+		Ok(name)
+	}
 
-		let name = match name {
-			Some(string) => string,
-			None => "Untitled Group".into(),
-		};
-
-		let mut items: Vec<WrappedComponent> = items
-			.into_iter()
-			.map(|block| WrappedComponent::from(delegate_embed_display(&block, context)))
-			.collect();
-
-		if items.is_empty() {
-			items.push(WrappedComponent::from(Box::new(TextComponent::new(
-				"No items in group",
-			))))
-		}
-
-		let content = StackComponent {
-			direction: StackDirection::Fit,
-			items,
-		};
-
-		Ok(DisplayObject::new(Box::new(content))
-			.meta(DisplayMeta::new().page(PageMeta::new().header(&name))))
+	fn page_display(block: &Block, context: &Context) -> Result<DisplayObject, Error> {
+		page_display(block, context)
 	}
 
 	fn embed_display(block: &Block, context: &Context) -> Box<dyn DisplayComponent> {
-		embed_display(block, context).unwrap_or_else(|e| Box::new(error_card(&e.to_string())))
+		embed_display(block, context).unwrap_or_else(|e| box error_card(&e.to_string()))
 	}
 
-	fn create_display(_context: &Context, _user_id: i32) -> Result<CreationObject, Error> {
-		Ok(CreationObject {
-			header_component: Box::new(TextComponent::new("New Group Block")),
-			main_component: Box::new(TextComponent::new("Coming soon")),
-			input_template: "".to_string(),
-		})
+	fn create_display(context: &Context, user_id: i32) -> Result<CreationObject, Error> {
+		create_display(context, user_id)
 	}
 
-	fn create(_input: String, _context: &Context, _user_id: i32) -> Result<Block, Error> {
-		Err(Error::GenericError)
+	fn create(input: String, context: &Context, user_id: i32) -> Result<Block, Error> {
+		methods::create::create(input, context, user_id)
 	}
 
 	fn method_delegate(
-		_context: &Context,
+		context: &Context,
 		name: String,
-		_block_id: i64,
-		_args: String,
+		block_id: i64,
+		args: String,
 	) -> Result<Block, Error> {
-		Err(BlockError::MethodExist(name, Self::name()).into())
+		method_delegate(context, name, block_id, args)
 	}
-
-	fn block_name(block: &Block, context: &Context) -> Result<String, Error> {
-		let conn = &context.pool.get()?;
-		let user_id = optional_validate_token(optional_token(context))?;
-		let (name, _) = group_properties(block.id, conn, user_id, true)?;
-		Ok(match name.and_then(|block| block.block_data) {
-			Some(data) => data,
-			None => "Group Block".to_string(),
-		})
-	}
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct CreationArgs {
-	name: String,
-	content: String,
-}
-
-fn embed_display(block: &Block, context: &Context) -> Result<Box<dyn DisplayComponent>, Error> {
-	let conn = &context.pool.get()?;
-	let user_id = optional_validate_token(optional_token(context))?;
-	let (name, items) = group_properties(block.id, conn, user_id, false)?;
-
-	let name = name.and_then(|block| block.block_data);
-
-	let name = match name {
-		Some(string) => string,
-		None => "Untitled Group".into(),
-	};
-
-	let mut items: Vec<WrappedComponent> = items
-		.into_iter()
-		.map(|block| WrappedComponent::from(delegate_embed_display(&block, context)))
-		.collect();
-
-	if items.is_empty() {
-		items.push(WrappedComponent::from(Box::new(TextComponent::new(
-			"No items in group",
-		))))
-	}
-
-	let content = StackComponent {
-		direction: StackDirection::Fit,
-		items,
-	};
-
-	Ok(Box::new(CardComponent {
-		color: None,
-		content: Box::new(content),
-		header: CardHeader::new(&name).id(block.id).icon(Icon::Folder),
-	}))
 }
 
 impl GroupBlock {
