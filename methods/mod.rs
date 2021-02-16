@@ -1,6 +1,7 @@
 use super::BLOCK_NAME;
 use block_tools::{blocks::Context, models::Block, BlockError, Error};
 pub mod create;
+pub mod root;
 
 pub fn method_delegate(
 	_context: &Context,

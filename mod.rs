@@ -18,6 +18,7 @@ use methods::method_delegate;
 mod display;
 mod group_props;
 mod methods;
+pub use methods::root::create_root;
 
 pub const BLOCK_NAME: &str = "group";
 

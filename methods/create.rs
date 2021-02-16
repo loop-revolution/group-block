@@ -8,11 +8,18 @@ use serde::{Deserialize, Serialize};
 use crate::blocks::{data_block, group_block::BLOCK_NAME};
 
 pub fn create(input: String, context: &Context, user_id: i32) -> Result<Block, Error> {
-	let conn = &context.conn()?;
-
 	let input = serde_json::from_str::<CreationArgs>(&input);
-
 	let input: CreationArgs = input.map_err(|_| BlockError::InputParse)?;
+
+	create_with_args(input, context, user_id)
+}
+
+pub fn create_with_args(
+	input: CreationArgs,
+	context: &Context,
+	user_id: i32,
+) -> Result<Block, Error> {
+	let conn = &context.conn()?;
 
 	let group_block = MinNewBlock {
 		block_type: BLOCK_NAME,
@@ -52,13 +59,13 @@ pub fn create(input: String, context: &Context, user_id: i32) -> Result<Block, E
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct CreationArgs {
-	name: String,
-	desc: String,
-	items: Vec<Item>,
+pub struct CreationArgs {
+	pub name: String,
+	pub desc: String,
+	pub items: Vec<Item>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Item {
-	id: String,
+pub struct Item {
+	pub id: String,
 }
