@@ -2,10 +2,7 @@ use block_tools::{
 	auth::{optional_token, optional_validate_token},
 	blocks::{BlockType, Context, TypeInfo},
 	display_api::{
-		component::{
-			card::{error_card, Icon},
-			DisplayComponent,
-		},
+		component::{card::error_card, icon::Icon, DisplayComponent},
 		CreationObject, DisplayObject,
 	},
 	dsl::prelude::*,

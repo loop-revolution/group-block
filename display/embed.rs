@@ -2,7 +2,8 @@ use block_tools::{
 	auth::{optional_token, optional_validate_token},
 	blocks::Context,
 	display_api::component::{
-		card::{CardComponent, CardHeader, Icon},
+		card::{CardComponent, CardHeader},
+		icon::Icon,
 		menu::MenuComponent,
 		stack::{StackComponent, StackDirection},
 		text::TextComponent,
