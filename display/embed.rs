@@ -3,6 +3,7 @@ use block_tools::{
 	blocks::Context,
 	display_api::component::{
 		card::{CardComponent, CardHeader, Icon},
+		menu::MenuComponent,
 		stack::{StackComponent, StackDirection},
 		text::TextComponent,
 		DisplayComponent, WrappedComponent,
@@ -49,9 +50,15 @@ pub fn embed_display(block: &Block, context: &Context) -> Result<Box<dyn Display
 	}
 	content.push(stack);
 
+	let mut header = CardHeader::new(&name).id(block.id).icon(Icon::Folder);
+
+	if let Some(user_id) = user_id {
+		header.menu = Some(MenuComponent::load_from_block(block, user_id));
+	}
+
 	Ok(box CardComponent {
 		color: None,
 		content: box content,
-		header: CardHeader::new(&name).id(block.id).icon(Icon::Folder),
+		header,
 	})
 }

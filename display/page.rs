@@ -7,6 +7,7 @@ use block_tools::{
 	blocks::Context,
 	display_api::{
 		component::{
+			menu::MenuComponent,
 			stack::{StackComponent, StackDirection},
 			text::TextComponent,
 			DisplayComponent, WrappedComponent,
@@ -56,6 +57,11 @@ pub fn page_display(block: &Block, context: &Context) -> Result<DisplayObject, E
 	}
 	content.push(stack);
 
-	Ok(DisplayObject::new(box content)
-		.meta(DisplayMeta::default().page(PageMeta::new().header(&name))))
+	let mut page = PageMeta::new().header(&name);
+
+	if let Some(user_id) = user_id {
+		page.menu = Some(MenuComponent::load_from_block(block, user_id));
+	}
+
+	Ok(DisplayObject::new(box content).meta(DisplayMeta::default().page(page)))
 }
