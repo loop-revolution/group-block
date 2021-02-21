@@ -15,7 +15,7 @@ pub fn create_display(_context: &Context, _user_id: i32) -> Result<CreationObjec
 	let header = TextComponent::new("New Group Block").preset(TextPreset::Heading);
 	let name_input = InputComponent::new().label("Name").name("NAME");
 	let content_input = InputComponent::new().label("Description").name("DESC");
-	let items_input = TextComponent::new("Adding items coming soon");
+	let items_input = TextComponent::new("You will be able to add blocks after.");
 	let main = StackComponent::new(StackDirection::Vertical)
 		.append(Box::new(name_input))
 		.append(Box::new(content_input))
