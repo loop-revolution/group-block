@@ -13,6 +13,8 @@ mod methods;
 mod name;
 pub use methods::root::create_root;
 
+use self::methods::visibility_update::visibility_update;
+
 pub const BLOCK_NAME: &str = "group";
 
 pub struct GroupBlock {}
@@ -57,6 +59,10 @@ impl BlockType for GroupBlock {
 		args: String,
 	) -> Result<Block, Error> {
 		methods::method_delegate(context, name, block_id, args)
+	}
+
+	fn visibility_update(context: &Context, block_id: i64, public: bool) -> Result<(), Error> {
+		visibility_update(context, block_id, public)
 	}
 }
 

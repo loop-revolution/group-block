@@ -57,4 +57,32 @@ impl Properties {
 
 		Ok(props)
 	}
+
+	pub fn get_dangerous(block_id: i64, conn: &PgConnection) -> Result<Properties, Error> {
+		let property_list: Vec<Property> = properties::dsl::properties
+			.filter(properties::dsl::parent_id.eq(block_id))
+			.load::<Property>(conn)?;
+
+		let mut props = Properties::default();
+
+		for property in property_list {
+			match property.property_name.as_str() {
+				"name" => {
+					props.name = Block::by_id(property.value_id, conn)?;
+				}
+				"desc" => {
+					props.description = Block::by_id(property.value_id, conn)?;
+				}
+				"item" => {
+					let block = Block::by_id(property.value_id, conn)?;
+					if let Some(block) = block {
+						props.items.push(block);
+					}
+				}
+				_ => {}
+			}
+		}
+
+		Ok(props)
+	}
 }

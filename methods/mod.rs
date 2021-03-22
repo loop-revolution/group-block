@@ -2,6 +2,7 @@ use super::BLOCK_NAME;
 use block_tools::{blocks::Context, models::Block, BlockError, Error};
 pub mod create;
 pub mod root;
+pub mod visibility_update;
 
 pub fn method_delegate(
 	_context: &Context,
