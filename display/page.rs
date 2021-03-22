@@ -1,12 +1,16 @@
 use crate::{
-	blocks::{data_block::edit_data_component, group_block::group_props::Properties},
+	blocks::{data_block::masked_data_edit, group_block::group_props::Properties},
 	delegation::display::delegate_embed_display,
 };
 use block_tools::{
-	auth::{optional_token, optional_validate_token},
+	auth::{
+		optional_token, optional_validate_token,
+		permissions::{has_perm_level, PermLevel},
+	},
 	blocks::Context,
 	display_api::{
 		component::{
+			input::InputSize,
 			menu::MenuComponent,
 			stack::{StackComponent, StackDirection},
 			text::TextComponent,
@@ -14,23 +18,31 @@ use block_tools::{
 		},
 		DisplayMeta, DisplayObject, PageMeta,
 	},
-	models::Block,
+	models::{Block, User},
 	Error,
 };
 
 pub fn page_display(block: &Block, context: &Context) -> Result<DisplayObject, Error> {
 	let conn = &context.conn()?;
 	let user_id = optional_validate_token(optional_token(context))?;
+	let user = if let Some(id) = user_id {
+		User::by_id(id, conn)?
+	} else {
+		None
+	};
+	let is_root = match &user {
+		None => false,
+		Some(user) => user.root_id == Some(block.id),
+	};
 
+	// Get all the blocks properties
 	let Properties {
 		name,
 		description,
 		items,
 	} = Properties::build(block.id, user_id, conn)?;
 
-	let name = name
-		.and_then(|block| block.block_data)
-		.unwrap_or_else(|| "Untitled Group".into());
+	let name_string = name.clone().and_then(|block| block.block_data);
 	let desc = description.clone().and_then(|block| block.block_data);
 	let items: Vec<WrappedComponent> = items
 		.into_iter()
@@ -47,20 +59,38 @@ pub fn page_display(block: &Block, context: &Context) -> Result<DisplayObject, E
 	};
 	let mut content = StackComponent::new(StackDirection::Vertical);
 
-	if let Some(desc) = desc {
-		let block = description.unwrap();
-		content.push(
-			box edit_data_component(block.id.to_string())
-				.label("Description")
-				.initial_value(&desc),
-		)
+	if !is_root {
+		if let Some(desc) = desc {
+			let block = description.unwrap();
+			content.push(
+				box masked_data_edit(block.id.to_string(), Some(desc), false)
+					.label("Description")
+					.size(InputSize::MultiLine),
+			)
+		}
 	}
 	content.push(stack);
 
-	let mut page = PageMeta::new().header(&name);
+	let mut page = PageMeta::new();
+	let header_backup = name_string.unwrap_or_else(|| "Untitled Group".into());
 
-	if let Some(user_id) = user_id {
-		page.menu = Some(MenuComponent::load_from_block(block, user_id));
+	if let Some(user) = user {
+		if !is_root {
+			page.menu = Some(MenuComponent::load_from_block(block, user.id));
+			if let Some(name) = name {
+				if has_perm_level(user.id, &name, PermLevel::Edit) {
+					page = page.header_component(
+						box masked_data_edit(name.id.to_string(), name.block_data, true)
+							.label("Group Name")
+							.size(InputSize::Medium),
+					)
+				} else {
+					page = page.header(&header_backup)
+				}
+			}
+		}
+	} else {
+		page = page.header(&header_backup)
 	}
 
 	Ok(DisplayObject::new(box content).meta(DisplayMeta::default().page(page)))
