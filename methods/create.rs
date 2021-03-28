@@ -27,41 +27,46 @@ pub fn create_with_args(
 	}
 	.insert(conn)?;
 
-	let name_block = MinNewBlock {
-		block_type: data_block::BLOCK_NAME,
-		owner_id: user_id,
-	}
-	.into()
-	.data(&input.name)
-	.insert(conn)?;
+	if let Some(name) = input.name {
+		let name_block = MinNewBlock {
+			block_type: data_block::BLOCK_NAME,
+			owner_id: user_id,
+		}
+		.into()
+		.data(&name)
+		.insert(conn)?;
 
-	let desc_block = MinNewBlock {
-		block_type: data_block::BLOCK_NAME,
-		owner_id: user_id,
+		group_block
+			.make_property("name", name_block.id)
+			.insert(conn)?;
 	}
-	.into()
-	.data(&input.desc)
-	.insert(conn)?;
+
+	if let Some(desc) = input.desc {
+		let desc_block = MinNewBlock {
+			block_type: data_block::BLOCK_NAME,
+			owner_id: user_id,
+		}
+		.into()
+		.data(&desc)
+		.insert(conn)?;
+
+		group_block
+			.make_property("desc", desc_block.id)
+			.insert(conn)?;
+	}
 
 	for item in input.items {
 		let id: i64 = item.id.parse().unwrap();
 		group_block.make_property("item", id).insert(conn)?;
 	}
 
-	group_block
-		.make_property("name", name_block.id)
-		.insert(conn)?;
-	group_block
-		.make_property("desc", desc_block.id)
-		.insert(conn)?;
-
 	Ok(group_block)
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CreationArgs {
-	pub name: String,
-	pub desc: String,
+	pub name: Option<String>,
+	pub desc: Option<String>,
 	pub items: Vec<Item>,
 }
 

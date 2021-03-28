@@ -9,8 +9,8 @@ use super::create::{create_with_args, CreationArgs, Item};
 pub fn create_root(context: &Context, user: User, first_block_id: i64) -> Result<Block, Error> {
 	let conn = context.conn()?;
 	let args = CreationArgs {
-		name: "Dashboard".into(),
-		desc: "".into(),
+		name: Some("Dashboard".into()),
+		desc: Some("".into()),
 		items: vec![Item {
 			id: first_block_id.to_string(),
 		}],

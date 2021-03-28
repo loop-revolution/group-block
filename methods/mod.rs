@@ -1,14 +1,19 @@
-use super::BLOCK_NAME;
+use super::GroupBlock;
 use block_tools::{blocks::Context, models::Block, BlockError, Error};
+pub mod add;
 pub mod create;
 pub mod root;
 pub mod visibility_update;
+use block_tools::blocks::BlockType;
 
 pub fn method_delegate(
-	_context: &Context,
+	context: &Context,
 	name: String,
-	_block_id: i64,
-	_args: String,
+	block_id: i64,
+	args: String,
 ) -> Result<Block, Error> {
-	Err(BlockError::MethodExist(name, BLOCK_NAME.to_string()).into())
+	match name.as_str() {
+		"add" => add::add_method(context, block_id, args),
+		_ => Err(BlockError::MethodExist(name, GroupBlock::name()).into()),
+	}
 }

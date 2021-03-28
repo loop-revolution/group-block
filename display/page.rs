@@ -1,5 +1,8 @@
 use crate::{
-	blocks::{data_block::masked_data_edit, group_block::group_props::Properties},
+	blocks::{
+		data_block::masked_data_edit,
+		group_block::{group_props::Properties, methods::add::add_action_object},
+	},
 	delegation::display::delegate_embed_display,
 };
 use block_tools::{
@@ -10,8 +13,9 @@ use block_tools::{
 	blocks::Context,
 	display_api::{
 		component::{
+			icon::Icon,
 			input::InputSize,
-			menu::MenuComponent,
+			menu::{CustomMenuItem, MenuComponent},
 			stack::{StackComponent, StackDirection},
 			text::TextComponent,
 			DisplayComponent, WrappedComponent,
@@ -75,8 +79,8 @@ pub fn page_display(block: &Block, context: &Context) -> Result<DisplayObject, E
 	let header_backup = name_string.unwrap_or_else(|| "Untitled Group".into());
 
 	if let Some(user) = user {
+		page.menu = Some(MenuComponent::load_from_block(block, user.id));
 		if !is_root {
-			page.menu = Some(MenuComponent::load_from_block(block, user.id));
 			if let Some(name) = name {
 				if has_perm_level(user.id, &name, PermLevel::Edit) {
 					page = page.header_component(
@@ -87,6 +91,14 @@ pub fn page_display(block: &Block, context: &Context) -> Result<DisplayObject, E
 				} else {
 					page = page.header(&header_backup)
 				}
+			}
+		}
+		if let Some(mut menu) = page.menu.clone() {
+			if has_perm_level(user.id, &block, PermLevel::Edit) {
+				let action = add_action_object(block.id);
+				let item = CustomMenuItem::new("Add a Block", Icon::Plus).interact(action);
+				menu.custom = Some(vec![item]);
+				page.menu = Some(menu)
 			}
 		}
 	} else {

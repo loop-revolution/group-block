@@ -1,10 +1,13 @@
 use block_tools::{
-	auth::{optional_token, optional_validate_token},
+	auth::{
+		optional_token, optional_validate_token,
+		permissions::{has_perm_level, PermLevel},
+	},
 	blocks::Context,
 	display_api::component::{
 		card::{CardComponent, CardHeader},
 		icon::Icon,
-		menu::MenuComponent,
+		menu::{CustomMenuItem, MenuComponent},
 		stack::{StackComponent, StackDirection},
 		text::TextComponent,
 		DisplayComponent, WrappedComponent,
@@ -14,7 +17,8 @@ use block_tools::{
 };
 
 use crate::{
-	blocks::group_block::group_props::Properties, delegation::display::delegate_embed_display,
+	blocks::group_block::{group_props::Properties, methods::add::add_action_object},
+	delegation::display::delegate_embed_display,
 };
 
 pub fn embed_display(block: &Block, context: &Context) -> Result<Box<dyn DisplayComponent>, Error> {
@@ -54,7 +58,13 @@ pub fn embed_display(block: &Block, context: &Context) -> Result<Box<dyn Display
 	let mut header = CardHeader::new(&name).id(block.id).icon(Icon::Folder);
 
 	if let Some(user_id) = user_id {
-		header.menu = Some(MenuComponent::load_from_block(block, user_id));
+		let mut menu = MenuComponent::load_from_block(block, user_id);
+		if has_perm_level(user_id, block, PermLevel::Edit) {
+			let action = add_action_object(block.id);
+			let item = CustomMenuItem::new("Add a Block", Icon::Plus).interact(action);
+			menu.custom = Some(vec![item]);
+		}
+		header.menu = Some(menu);
 	}
 
 	Ok(box CardComponent {
