@@ -68,7 +68,7 @@ pub fn embed_display(block: &Block, context: &Context) -> Result<Box<dyn Display
 	}
 
 	Ok(box CardComponent {
-		color: None,
+		color: block.color.clone(),
 		content: box content,
 		header,
 	})
