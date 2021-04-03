@@ -6,15 +6,11 @@ use block_tools::{
 	Error,
 };
 
-pub struct Properties {
-	pub name: Option<Block>,
-	pub description: Option<Block>,
-	pub items: Vec<Block>,
-}
+use super::GroupBlock;
 
-impl Default for Properties {
+impl Default for GroupBlock {
 	fn default() -> Self {
-		Properties {
+		Self {
 			name: None,
 			description: None,
 			items: vec![],
@@ -22,17 +18,17 @@ impl Default for Properties {
 	}
 }
 
-impl Properties {
-	pub fn build(
+impl GroupBlock {
+	pub fn from_id(
 		block_id: i64,
 		user_id: Option<i32>,
 		conn: &PgConnection,
-	) -> Result<Properties, Error> {
+	) -> Result<Self, Error> {
 		let property_list: Vec<Property> = properties::dsl::properties
 			.filter(properties::dsl::parent_id.eq(block_id))
 			.load::<Property>(conn)?;
 
-		let mut props = Properties::default();
+		let mut props = GroupBlock::default();
 
 		for property in property_list {
 			match property.property_name.as_str() {
@@ -58,12 +54,12 @@ impl Properties {
 		Ok(props)
 	}
 
-	pub fn get_dangerous(block_id: i64, conn: &PgConnection) -> Result<Properties, Error> {
+	pub fn from_id_admin(block_id: i64, conn: &PgConnection) -> Result<Self, Error> {
 		let property_list: Vec<Property> = properties::dsl::properties
 			.filter(properties::dsl::parent_id.eq(block_id))
 			.load::<Property>(conn)?;
 
-		let mut props = Properties::default();
+		let mut props = Self::default();
 
 		for property in property_list {
 			match property.property_name.as_str() {

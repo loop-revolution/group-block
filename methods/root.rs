@@ -4,18 +4,20 @@ use block_tools::{
 	Error,
 };
 
-use super::create::{create_with_args, CreationArgs, Item};
+use super::super::GroupBlock;
+use super::create::{CreationArgs, Item};
 
 pub fn create_root(context: &Context, user: User, first_block_id: i64) -> Result<Block, Error> {
 	let conn = context.conn()?;
-	let args = CreationArgs {
+
+	let mut args = CreationArgs {
 		name: Some("Dashboard".into()),
-		desc: Some("".into()),
-		items: vec![Item {
-			id: first_block_id.to_string(),
-		}],
+		..CreationArgs::default()
 	};
-	let block = create_with_args(args, context, user.id)?;
+	args.items.push(Item::from(first_block_id));
+
+	let block = GroupBlock::handle_create(args, context, user.id)?;
 	user.update_root(Some(block.id), &conn)?;
+
 	Ok(block)
 }

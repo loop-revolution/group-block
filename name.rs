@@ -5,13 +5,18 @@ use block_tools::{
 	Error,
 };
 
-pub fn block_name(block: &Block, context: &Context) -> Result<String, Error> {
-	let conn = &context.conn()?;
-	let user_id = optional_validate_token(optional_token(context))?;
-	let name = super::group_props::Properties::build(block.id, user_id, conn)?
-		.name
-		.and_then(|block| block.block_data)
-		.unwrap_or_else(|| "Group Block".into());
+use super::GroupBlock;
 
-	Ok(name)
+impl GroupBlock {
+	/// Gets the name of a specific block (name prop) or use a default
+	pub fn handle_block_name(block: &Block, context: &Context) -> Result<String, Error> {
+		let conn = &context.conn()?;
+		let user_id = optional_validate_token(optional_token(context))?;
+		let name = Self::from_id(block.id, user_id, conn)?
+			.name
+			.and_then(|block| block.block_data)
+			.unwrap_or_else(|| "Group Block".into());
+
+		Ok(name)
+	}
 }

@@ -8,16 +8,20 @@ use block_tools::{
 	Error,
 };
 mod display;
-mod group_props;
+mod from_id;
 mod methods;
 mod name;
 pub use methods::root::create_root;
 
-use self::methods::visibility_update::visibility_update;
-
 pub const BLOCK_NAME: &str = "group";
 
-pub struct GroupBlock {}
+/// A block type that can be thought of like a sort of folder
+pub struct GroupBlock {
+	pub name: Option<Block>,
+	pub description: Option<Block>,
+	pub items: Vec<Block>,
+}
+
 impl BlockType for GroupBlock {
 	fn name() -> String {
 		BLOCK_NAME.to_string()
@@ -32,24 +36,24 @@ impl BlockType for GroupBlock {
 	}
 
 	fn block_name(block: &Block, context: &Context) -> Result<String, Error> {
-		name::block_name(block, context)
+		Self::handle_block_name(block, context)
 	}
 
 	fn page_display(block: &Block, context: &Context) -> Result<DisplayObject, Error> {
-		display::page::page_display(block, context)
+		Self::handle_page_display(block, context)
 	}
 
 	fn embed_display(block: &Block, context: &Context) -> Box<dyn DisplayComponent> {
-		display::embed::embed_display(block, context)
+		Self::handle_embed_display(block, context)
 			.unwrap_or_else(|e| box error_card(&e.to_string()))
 	}
 
 	fn create_display(context: &Context, user_id: i32) -> Result<CreationObject, Error> {
-		display::create::create_display(context, user_id)
+		Self::handle_create_display(context, user_id)
 	}
 
 	fn create(input: String, context: &Context, user_id: i32) -> Result<Block, Error> {
-		methods::create::create(input, context, user_id)
+		Self::handle_create_raw(input, context, user_id)
 	}
 
 	fn method_delegate(
@@ -58,15 +62,16 @@ impl BlockType for GroupBlock {
 		block_id: i64,
 		args: String,
 	) -> Result<Block, Error> {
-		methods::method_delegate(context, name, block_id, args)
+		Self::handle_method_delegate(context, name, block_id, args)
 	}
 
 	fn visibility_update(context: &Context, block_id: i64, public: bool) -> Result<(), Error> {
-		visibility_update(context, block_id, public)
+		Self::handle_visibility_update(context, block_id, public)
 	}
 }
 
 impl GroupBlock {
+	/// Make a new block in the DB with the "group" block type
 	pub fn insert_new(
 		conn: &block_tools::dsl::prelude::PgConnection,
 		owner_id: i32,
