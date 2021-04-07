@@ -10,11 +10,10 @@ use block_tools::{
 	blocks::Context,
 	display_api::{
 		component::{
-			icon::Icon,
-			input::InputSize,
-			menu::{CustomMenuItem, MenuComponent},
-			stack::{StackComponent, StackDirection},
-			text::TextComponent,
+			atomic::{icon::Icon, text::TextComponent},
+			form::input::{InputComponent, InputSize},
+			layout::stack::StackComponent,
+			menu::menu::{CustomMenuItem, MenuComponent},
 			DisplayComponent, WrappedComponent,
 		},
 		DisplayMeta, DisplayObject, PageMeta,
@@ -51,62 +50,75 @@ impl GroupBlock {
 			.map(|block| WrappedComponent::from(delegate_embed_display(&block, context)))
 			.collect();
 
-		let stack: Box<dyn DisplayComponent> = if items.is_empty() {
-			box TextComponent::new("No items in group")
+		let stack: DisplayComponent = if items.is_empty() {
+			TextComponent::info("No items in group").into()
 		} else {
-			box StackComponent {
-				direction: StackDirection::Fit,
-				items,
-			}
+			StackComponent::new(items).into()
 		};
-		let mut content = StackComponent::new(StackDirection::Vertical);
+		let mut content = StackComponent::vertical();
 
 		if !is_root {
 			if let Some(desc) = desc {
 				let block = description.unwrap();
 				content.push(
-					box DataBlock::masked_editable_data(block.id.to_string(), Some(desc), false)
-						.label("Description")
-						.size(InputSize::MultiLine),
+					InputComponent {
+						label: Some("Description".into()),
+						size: Some(InputSize::MultiLine),
+						..DataBlock::masked_editable_data(block.id.to_string(), Some(desc), false)
+					}
+					.into(),
 				)
 			}
 		}
 		content.push(stack);
 
-		let mut page = PageMeta::new();
+		let mut page = PageMeta::default();
 		let header_backup = name_string.unwrap_or_else(|| "Untitled Group".into());
 
 		if let Some(user) = user {
-			page.menu = Some(MenuComponent::load_from_block(block, user.id));
+			page.menu = Some(MenuComponent::from_block(block, user.id));
 			if !is_root {
 				if let Some(name) = name {
 					if has_perm_level(user.id, &name, PermLevel::Edit) {
-						page = page.header_component(
-							box DataBlock::masked_editable_data(
-								name.id.to_string(),
-								name.block_data,
-								true,
-							)
-							.label("Group Name")
-							.size(InputSize::Medium),
-						)
+						page.header_component = Some(
+							InputComponent {
+								label: Some("Group Name".into()),
+								size: Some(InputSize::Medium),
+								..DataBlock::masked_editable_data(
+									name.id.to_string(),
+									name.block_data,
+									true,
+								)
+							}
+							.into(),
+						);
 					} else {
-						page = page.header(&header_backup)
+						page.header = Some(header_backup)
 					}
 				}
 			}
 			if let Some(mut menu) = page.menu.clone() {
 				if has_perm_level(user.id, &block, PermLevel::Edit) {
 					let action = Self::build_add_action_object(block.id);
-					let item = CustomMenuItem::new("Add a Block", Icon::Plus).interact(action);
+					let item = CustomMenuItem {
+						interact: Some(action),
+						..CustomMenuItem::new("Add a Block", Icon::Plus)
+					};
 					menu.custom = Some(vec![item]);
 					page.menu = Some(menu)
 				}
 			}
 		} else {
-			page = page.header(&header_backup)
+			page.header = Some(header_backup)
 		}
 
-		Ok(DisplayObject::new(box content).meta(DisplayMeta::default().page(page)))
+		let meta = DisplayMeta {
+			page: Some(page),
+			..Default::default()
+		};
+		Ok(DisplayObject {
+			meta: Some(meta),
+			..DisplayObject::new(content.into())
+		})
 	}
 }

@@ -2,9 +2,7 @@ use block_tools::{
 	blocks::Context,
 	display_api::{
 		component::{
-			input::InputComponent,
-			stack::{StackComponent, StackDirection},
-			text::{TextComponent, TextPreset},
+			atomic::text::TextComponent, form::input::InputComponent, layout::stack::StackComponent,
 		},
 		CreationObject,
 	},
@@ -17,14 +15,24 @@ impl GroupBlock {
 		_context: &Context,
 		_user_id: i32,
 	) -> Result<CreationObject, Error> {
-		let header = TextComponent::new("New Group Block").preset(TextPreset::Heading);
-		let name_input = InputComponent::new().label("Name").name("NAME");
-		let content_input = InputComponent::new().label("Description").name("DESC");
-		let items_input = TextComponent::new("You will be able to add blocks after.");
-		let main = StackComponent::new(StackDirection::Vertical)
-			.append(box name_input)
-			.append(box content_input)
-			.append(box items_input);
+		let header = TextComponent::heading("New Group Block");
+
+		let name_input = InputComponent {
+			label: Some("Name".to_string()),
+			name: Some("NAME".to_string()),
+			..InputComponent::default()
+		};
+		let desc_input = InputComponent {
+			label: Some("Description".to_string()),
+			name: Some("DESC".to_string()),
+			..Default::default()
+		};
+		let items_input = TextComponent::info("You will be able to add blocks after creation.");
+
+		let mut main = StackComponent::vertical();
+		main.push(name_input.into());
+		main.push(desc_input.into());
+		main.push(items_input.into());
 
 		let template: String = r#"{
 			"name": $[NAME]$,
@@ -34,8 +42,8 @@ impl GroupBlock {
 		.split_whitespace()
 		.collect();
 		let object = CreationObject {
-			header_component: box header,
-			main_component: box main,
+			header_component: header.into(),
+			main_component: main.into(),
 			input_template: template,
 		};
 		Ok(object)

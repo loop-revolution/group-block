@@ -1,14 +1,11 @@
 use block_tools::{
 	blocks::Context,
-	models::{Block, MinNewBlock},
+	models::{Block, NewBlock},
 	BlockError, Error,
 };
 use serde::{Deserialize, Serialize};
 
-use crate::blocks::{
-	data_block,
-	group_block::{GroupBlock, BLOCK_NAME},
-};
+use crate::blocks::{data_block, group_block::GroupBlock};
 
 impl GroupBlock {
 	pub fn handle_create_raw(
@@ -31,19 +28,13 @@ impl GroupBlock {
 	) -> Result<Block, Error> {
 		let conn = &context.conn()?;
 
-		let group_block = MinNewBlock {
-			block_type: BLOCK_NAME,
-			owner_id: user_id,
-		}
-		.insert(conn)?;
+		let group_block = Self::insert_new(conn, user_id)?;
 
 		if let Some(name) = input.name {
-			let name_block = MinNewBlock {
-				block_type: data_block::BLOCK_NAME,
-				owner_id: user_id,
+			let name_block = NewBlock {
+				block_data: Some(name),
+				..NewBlock::new(data_block::BLOCK_NAME, user_id)
 			}
-			.into()
-			.data(&name)
 			.insert(conn)?;
 
 			group_block
@@ -52,12 +43,10 @@ impl GroupBlock {
 		}
 
 		if let Some(desc) = input.desc {
-			let desc_block = MinNewBlock {
-				block_type: data_block::BLOCK_NAME,
-				owner_id: user_id,
+			let desc_block = NewBlock {
+				block_data: Some(desc),
+				..NewBlock::new(data_block::BLOCK_NAME, user_id)
 			}
-			.into()
-			.data(&desc)
 			.insert(conn)?;
 
 			group_block

@@ -1,16 +1,7 @@
-use block_tools::{
-	auth::{
+use block_tools::{BlockError, Error, auth::{
 		permissions::{has_perm_level, PermLevel},
 		require_token, validate_token,
-	},
-	blocks::Context,
-	display_api::{
-		component::search::{SearchComponent, SearchType},
-		ActionObject, MethodObject,
-	},
-	models::Block,
-	BlockError, Error,
-};
+	}, blocks::Context, display_api::{ActionObject, MethodObject, component::misc::search::{SearchComponent, SearchType}}, models::Block};
 use serde::{Deserialize, Serialize};
 
 use crate::blocks::group_block::{GroupBlock, BLOCK_NAME};
@@ -57,11 +48,13 @@ impl GroupBlock {
 			method_name: "add".to_string(),
 			arg_template: r#"{"id":$[ADD_BLOCK]$}"#.into(),
 		};
-		let search = SearchComponent::default()
-			.action_text("Choose a Block to add")
-			.r#type(SearchType::Block)
-			.name("ADD_BLOCK")
-			.then(ActionObject::method(method));
+		let search = SearchComponent {
+			action_text: Some("Choose a Block to add".to_string()),
+			search_type: Some(SearchType::Block),
+			name: Some("ADD_BLOCK".into()),
+			then: Some(ActionObject::method(method)),
+			..Default::default()
+		};
 		ActionObject::search(search)
 	}
 }

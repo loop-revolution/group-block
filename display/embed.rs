@@ -5,11 +5,12 @@ use block_tools::{
 	},
 	blocks::Context,
 	display_api::component::{
-		card::{CardComponent, CardHeader},
-		icon::Icon,
-		menu::{CustomMenuItem, MenuComponent},
-		stack::{StackComponent, StackDirection},
-		text::TextComponent,
+		atomic::{icon::Icon, text::TextComponent},
+		layout::{
+			card::{CardComponent, CardHeader},
+			stack::StackComponent,
+		},
+		menu::menu::{CustomMenuItem, MenuComponent},
 		DisplayComponent, WrappedComponent,
 	},
 	models::Block,
@@ -22,7 +23,7 @@ impl GroupBlock {
 	pub fn handle_embed_display(
 		block: &Block,
 		context: &Context,
-	) -> Result<Box<dyn DisplayComponent>, Error> {
+	) -> Result<DisplayComponent, Error> {
 		let conn = &context.conn()?;
 		let user_id = optional_validate_token(optional_token(context))?;
 
@@ -41,37 +42,44 @@ impl GroupBlock {
 			.map(|block| WrappedComponent::from(delegate_embed_display(block, context)))
 			.collect();
 
-		let stack: Box<dyn DisplayComponent> = if items.is_empty() {
-			box TextComponent::new("No items in group")
+		let stack: DisplayComponent = if items.is_empty() {
+			TextComponent::info("No items in group").into()
 		} else {
-			box StackComponent {
-				direction: StackDirection::Fit,
+			StackComponent {
 				items,
+				..Default::default()
 			}
+			.into()
 		};
-		let mut content = StackComponent::new(StackDirection::Vertical);
+		let mut content = StackComponent::vertical();
 
 		if let Some(description) = description {
-			content.push(box TextComponent::new(&description))
+			content.push(TextComponent::new(description).into())
 		}
 		content.push(stack);
 
-		let mut header = CardHeader::new(&name).id(block.id).icon(Icon::Folder);
+		let mut header = CardHeader {
+			block_id: Some(block.id.to_string()),
+			icon: Some(Icon::Folder),
+			..CardHeader::new(name)
+		};
 
 		if let Some(user_id) = user_id {
-			let mut menu = MenuComponent::load_from_block(block, user_id);
+			let mut menu = MenuComponent::from_block(block, user_id);
 			if has_perm_level(user_id, block, PermLevel::Edit) {
 				let action = Self::build_add_action_object(block.id);
-				let item = CustomMenuItem::new("Add a Block", Icon::Plus).interact(action);
+				let mut item = CustomMenuItem::new("Add a Block", Icon::Plus);
+				item.interact = Some(action);
 				menu.custom = Some(vec![item]);
 			}
 			header.menu = Some(menu);
 		}
 
-		Ok(box CardComponent {
+		Ok(CardComponent {
 			color: block.color.clone(),
-			content: box content,
-			header,
-		})
+			content: box content.into(),
+			header: box header,
+		}
+		.into())
 	}
 }

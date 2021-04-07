@@ -1,10 +1,10 @@
 use block_tools::{
 	blocks::{BlockType, Context, TypeInfo},
 	display_api::{
-		component::{card::error_card, icon::Icon, DisplayComponent},
+		component::{atomic::icon::Icon, layout::card::CardComponent, DisplayComponent},
 		CreationObject, DisplayObject,
 	},
-	models::{Block, MinNewBlock},
+	models::{Block, NewBlock},
 	Error,
 };
 mod display;
@@ -43,9 +43,9 @@ impl BlockType for GroupBlock {
 		Self::handle_page_display(block, context)
 	}
 
-	fn embed_display(block: &Block, context: &Context) -> Box<dyn DisplayComponent> {
+	fn embed_display(block: &Block, context: &Context) -> DisplayComponent {
 		Self::handle_embed_display(block, context)
-			.unwrap_or_else(|e| box error_card(&e.to_string()))
+			.unwrap_or_else(|e| CardComponent::error_card(e).into())
 	}
 
 	fn create_display(context: &Context, user_id: i32) -> Result<CreationObject, Error> {
@@ -76,10 +76,6 @@ impl GroupBlock {
 		conn: &block_tools::dsl::prelude::PgConnection,
 		owner_id: i32,
 	) -> Result<Block, Error> {
-		MinNewBlock {
-			block_type: "group",
-			owner_id,
-		}
-		.insert(conn)
+		NewBlock::new("group", owner_id).insert(conn)
 	}
 }
