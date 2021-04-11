@@ -13,7 +13,7 @@ use block_tools::{
 			atomic::{icon::Icon, text::TextComponent},
 			form::input::{InputComponent, InputSize},
 			layout::stack::StackComponent,
-			menu::menu::{CustomMenuItem, MenuComponent},
+			menus::menu::{CustomMenuItem, MenuComponent},
 			DisplayComponent, WrappedComponent,
 		},
 		DisplayMeta, DisplayObject, PageMeta,

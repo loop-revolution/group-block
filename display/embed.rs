@@ -10,7 +10,7 @@ use block_tools::{
 			card::{CardComponent, CardHeader},
 			stack::StackComponent,
 		},
-		menu::menu::{CustomMenuItem, MenuComponent},
+		menus::menu::{CustomMenuItem, MenuComponent},
 		DisplayComponent, WrappedComponent,
 	},
 	models::Block,

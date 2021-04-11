@@ -1,7 +1,16 @@
-use block_tools::{BlockError, Error, auth::{
+use block_tools::{
+	auth::{
 		permissions::{has_perm_level, PermLevel},
 		require_token, validate_token,
-	}, blocks::Context, display_api::{ActionObject, MethodObject, component::misc::search::{SearchComponent, SearchType}}, models::Block};
+	},
+	blocks::Context,
+	display_api::{
+		component::misc::search::{SearchComponent, SearchType},
+		ActionObject, MethodObject,
+	},
+	models::Block,
+	BlockError, Error,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::blocks::group_block::{GroupBlock, BLOCK_NAME};
