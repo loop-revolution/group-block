@@ -15,7 +15,7 @@ pub use methods::root::create_root;
 
 pub const BLOCK_NAME: &str = "group";
 
-/// A block type that can be thought of like a sort of folder
+/// A block type that can be thought of like a sort of folder.
 pub struct GroupBlock {
 	pub name: Option<Block>,
 	pub description: Option<Block>,
