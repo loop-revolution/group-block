@@ -1,5 +1,5 @@
 use super::GroupBlock;
-use block_tools::{blocks::Context, models::Block, BlockError, Error};
+use block_tools::{blocks::Context, models::Block, BlockError, LoopError};
 pub mod add;
 pub mod create;
 pub mod root;
@@ -12,7 +12,7 @@ impl GroupBlock {
 		name: String,
 		block_id: i64,
 		args: String,
-	) -> Result<Block, Error> {
+	) -> Result<Block, LoopError> {
 		match name.as_str() {
 			"add" => Self::add_method(context, block_id, args),
 			_ => Err(BlockError::MethodExist(name, GroupBlock::name()).into()),

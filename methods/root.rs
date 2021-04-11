@@ -1,13 +1,13 @@
 use block_tools::{
 	blocks::Context,
 	models::{Block, User},
-	Error,
+	LoopError,
 };
 
 use super::super::GroupBlock;
 use super::create::{CreationArgs, Item};
 
-pub fn create_root(context: &Context, user: User, first_block_id: i64) -> Result<Block, Error> {
+pub fn create_root(context: &Context, user: User, first_block_id: i64) -> Result<Block, LoopError> {
 	let conn = context.conn()?;
 
 	let mut args = CreationArgs {

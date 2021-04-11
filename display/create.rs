@@ -6,7 +6,7 @@ use block_tools::{
 		},
 		CreationObject,
 	},
-	Error,
+	LoopError,
 };
 
 use crate::blocks::group_block::GroupBlock;
@@ -14,7 +14,7 @@ impl GroupBlock {
 	pub fn handle_create_display(
 		_context: &Context,
 		_user_id: i32,
-	) -> Result<CreationObject, Error> {
+	) -> Result<CreationObject, LoopError> {
 		let header = TextComponent::heading("New Group Block");
 
 		let name_input = InputComponent {

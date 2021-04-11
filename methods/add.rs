@@ -9,18 +9,18 @@ use block_tools::{
 		ActionObject, MethodObject,
 	},
 	models::Block,
-	BlockError, Error,
+	BlockError, LoopError,
 };
 use serde::{Deserialize, Serialize};
 
 use crate::blocks::group_block::{GroupBlock, BLOCK_NAME};
 
 impl GroupBlock {
-	pub fn add_method(context: &Context, block_id: i64, args: String) -> Result<Block, Error> {
+	pub fn add_method(context: &Context, block_id: i64, args: String) -> Result<Block, LoopError> {
 		let conn = &context.pool.get()?;
 		let user_id = validate_token(&require_token(context)?)?;
 
-		let access_err: Error =
+		let access_err: LoopError =
 			BlockError::TypeGenericError(format!("Cannot add blocks to {}", block_id)).into();
 
 		let block = match Block::by_id(block_id, conn)? {
@@ -30,7 +30,7 @@ impl GroupBlock {
 		if !has_perm_level(user_id, &block, PermLevel::Edit) {
 			return Err(access_err);
 		}
-		let invalid_err: Error = BlockError::InputParse.into();
+		let invalid_err: LoopError = BlockError::InputParse.into();
 		let input = match serde_json::from_str::<AddArgs>(&args) {
 			Ok(input) => input,
 			Err(_) => return Err(invalid_err),

@@ -14,7 +14,7 @@ use block_tools::{
 		DisplayComponent, WrappedComponent,
 	},
 	models::Block,
-	Error,
+	LoopError,
 };
 
 use crate::{blocks::group_block::GroupBlock, delegation::display::delegate_embed_display};
@@ -23,7 +23,7 @@ impl GroupBlock {
 	pub fn handle_embed_display(
 		block: &Block,
 		context: &Context,
-	) -> Result<DisplayComponent, Error> {
+	) -> Result<DisplayComponent, LoopError> {
 		let conn = &context.conn()?;
 		let user_id = optional_validate_token(optional_token(context))?;
 

@@ -5,7 +5,7 @@ use block_tools::{
 		CreationObject, DisplayObject,
 	},
 	models::{Block, NewBlock},
-	Error,
+	LoopError,
 };
 mod display;
 mod from_id;
@@ -35,11 +35,11 @@ impl BlockType for GroupBlock {
 		}
 	}
 
-	fn block_name(block: &Block, context: &Context) -> Result<String, Error> {
+	fn block_name(block: &Block, context: &Context) -> Result<String, LoopError> {
 		Self::handle_block_name(block, context)
 	}
 
-	fn page_display(block: &Block, context: &Context) -> Result<DisplayObject, Error> {
+	fn page_display(block: &Block, context: &Context) -> Result<DisplayObject, LoopError> {
 		Self::handle_page_display(block, context)
 	}
 
@@ -48,11 +48,11 @@ impl BlockType for GroupBlock {
 			.unwrap_or_else(|e| CardComponent::error_card(e).into())
 	}
 
-	fn create_display(context: &Context, user_id: i32) -> Result<CreationObject, Error> {
+	fn create_display(context: &Context, user_id: i32) -> Result<CreationObject, LoopError> {
 		Self::handle_create_display(context, user_id)
 	}
 
-	fn create(input: String, context: &Context, user_id: i32) -> Result<Block, Error> {
+	fn create(input: String, context: &Context, user_id: i32) -> Result<Block, LoopError> {
 		Self::handle_create_raw(input, context, user_id)
 	}
 
@@ -61,11 +61,11 @@ impl BlockType for GroupBlock {
 		name: String,
 		block_id: i64,
 		args: String,
-	) -> Result<Block, Error> {
+	) -> Result<Block, LoopError> {
 		Self::handle_method_delegate(context, name, block_id, args)
 	}
 
-	fn visibility_update(context: &Context, block_id: i64, public: bool) -> Result<(), Error> {
+	fn visibility_update(context: &Context, block_id: i64, public: bool) -> Result<(), LoopError> {
 		Self::handle_visibility_update(context, block_id, public)
 	}
 }
@@ -75,7 +75,7 @@ impl GroupBlock {
 	pub fn insert_new(
 		conn: &block_tools::dsl::prelude::PgConnection,
 		owner_id: i32,
-	) -> Result<Block, Error> {
+	) -> Result<Block, LoopError> {
 		NewBlock::new("group", owner_id).insert(conn)
 	}
 }

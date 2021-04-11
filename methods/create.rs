@@ -1,7 +1,7 @@
 use block_tools::{
 	blocks::Context,
 	models::{Block, NewBlock},
-	BlockError, Error,
+	BlockError, LoopError,
 };
 use serde::{Deserialize, Serialize};
 
@@ -12,7 +12,7 @@ impl GroupBlock {
 		input: String,
 		context: &Context,
 		user_id: i32,
-	) -> Result<Block, Error> {
+	) -> Result<Block, LoopError> {
 		let input = serde_json::from_str::<CreationArgs>(&input);
 		let input: CreationArgs = input.map_err(|_| BlockError::InputParse)?;
 
@@ -25,7 +25,7 @@ impl GroupBlock {
 		input: CreationArgs,
 		context: &Context,
 		user_id: i32,
-	) -> Result<Block, Error> {
+	) -> Result<Block, LoopError> {
 		let conn = &context.conn()?;
 
 		let group_block = Self::insert_new(conn, user_id)?;

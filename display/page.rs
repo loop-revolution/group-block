@@ -19,11 +19,14 @@ use block_tools::{
 		DisplayMeta, DisplayObject, PageMeta,
 	},
 	models::{Block, User},
-	Error,
+	LoopError,
 };
 
 impl GroupBlock {
-	pub fn handle_page_display(block: &Block, context: &Context) -> Result<DisplayObject, Error> {
+	pub fn handle_page_display(
+		block: &Block,
+		context: &Context,
+	) -> Result<DisplayObject, LoopError> {
 		let conn = &context.conn()?;
 		let user_id = optional_validate_token(optional_token(context))?;
 		let user = if let Some(id) = user_id {

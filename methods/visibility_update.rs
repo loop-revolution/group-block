@@ -1,4 +1,4 @@
-use block_tools::{blocks::Context, Error};
+use block_tools::{blocks::Context, LoopError};
 
 use crate::blocks::group_block::GroupBlock;
 
@@ -7,7 +7,7 @@ impl GroupBlock {
 		context: &Context,
 		block_id: i64,
 		public: bool,
-	) -> Result<(), Error> {
+	) -> Result<(), LoopError> {
 		let conn = &context.conn()?;
 		let Self {
 			name, description, ..

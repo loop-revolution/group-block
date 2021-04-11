@@ -3,7 +3,7 @@ use block_tools::{
 	dsl::prelude::*,
 	models::{Block, Property},
 	schema::properties,
-	Error,
+	LoopError,
 };
 
 use super::GroupBlock;
@@ -23,7 +23,7 @@ impl GroupBlock {
 		block_id: i64,
 		user_id: Option<i32>,
 		conn: &PgConnection,
-	) -> Result<Self, Error> {
+	) -> Result<Self, LoopError> {
 		let property_list: Vec<Property> = properties::dsl::properties
 			.filter(properties::dsl::parent_id.eq(block_id))
 			.load::<Property>(conn)?;
@@ -54,7 +54,7 @@ impl GroupBlock {
 		Ok(props)
 	}
 
-	pub fn from_id_admin(block_id: i64, conn: &PgConnection) -> Result<Self, Error> {
+	pub fn from_id_admin(block_id: i64, conn: &PgConnection) -> Result<Self, LoopError> {
 		let property_list: Vec<Property> = properties::dsl::properties
 			.filter(properties::dsl::parent_id.eq(block_id))
 			.load::<Property>(conn)?;
