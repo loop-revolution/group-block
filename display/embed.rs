@@ -66,6 +66,7 @@ impl GroupBlock {
 
 		if let Some(user_id) = user_id {
 			let mut menu = MenuComponent::from_block(block, user_id);
+			menu.load_comments(conn)?;
 			if has_perm_level(user_id, block, PermLevel::Edit) {
 				let action = Self::build_add_action_object(block.id);
 				let mut item = CustomMenuItem::new("Add a Block", Icon::Plus);

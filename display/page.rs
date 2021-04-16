@@ -79,7 +79,9 @@ impl GroupBlock {
 		let header_backup = name_string.unwrap_or_else(|| "Untitled Group".into());
 
 		if let Some(user) = user {
-			page.menu = Some(MenuComponent::from_block(block, user.id));
+			let mut menu = MenuComponent::from_block(block, user.id);
+			menu.load_comments(conn)?;
+			page.menu = Some(menu);
 			if !is_root {
 				if let Some(name) = name {
 					if has_perm_level(user.id, &name, PermLevel::Edit) {
