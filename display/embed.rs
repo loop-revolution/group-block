@@ -79,7 +79,7 @@ impl GroupBlock {
 		Ok(CardComponent {
 			color: block.color.clone(),
 			content: box content.into(),
-			header: box header,
+			header: Some(box header),
 		}
 		.into())
 	}
