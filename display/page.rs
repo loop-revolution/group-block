@@ -63,14 +63,11 @@ impl GroupBlock {
 		if !is_root {
 			if let Some(desc) = desc {
 				let block = description.unwrap();
-				content.push(
-					InputComponent {
-						label: Some("Description".into()),
-						size: Some(InputSize::MultiLine),
-						..DataBlock::masked_editable_data(block.id.to_string(), Some(desc), false)
-					}
-					.into(),
-				)
+				content.push(InputComponent {
+					label: Some("Description".into()),
+					size: Some(InputSize::MultiLine),
+					..DataBlock::masked_editable_data(block.id.to_string(), Some(desc), false)
+				})
 			}
 		}
 		content.push(stack);
@@ -123,7 +120,7 @@ impl GroupBlock {
 		};
 		Ok(DisplayObject {
 			meta: Some(meta),
-			..DisplayObject::new(content.into())
+			..DisplayObject::new(content)
 		})
 	}
 }

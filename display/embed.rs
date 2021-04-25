@@ -54,7 +54,7 @@ impl GroupBlock {
 		let mut content = StackComponent::vertical();
 
 		if let Some(description) = description {
-			content.push(TextComponent::new(description).into())
+			content.push(TextComponent::new(description))
 		}
 		content.push(stack);
 

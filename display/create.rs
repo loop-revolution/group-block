@@ -30,9 +30,9 @@ impl GroupBlock {
 		let items_input = TextComponent::info("You will be able to add blocks after creation.");
 
 		let mut main = StackComponent::vertical();
-		main.push(name_input.into());
-		main.push(desc_input.into());
-		main.push(items_input.into());
+		main.push(name_input);
+		main.push(desc_input);
+		main.push(items_input);
 
 		let template: String = r#"{
 			"name": $[NAME]$,
