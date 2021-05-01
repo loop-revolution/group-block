@@ -78,8 +78,8 @@ impl GroupBlock {
 
 		Ok(CardComponent {
 			color: block.color.clone(),
-			content: box content.into(),
 			header: Some(box header),
+			..CardComponent::new(content)
 		}
 		.into())
 	}
