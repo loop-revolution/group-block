@@ -15,9 +15,7 @@ impl GroupBlock {
 		_context: &Context,
 		_user_id: i32,
 	) -> Result<CreationObject, LoopError> {
-		let header = TextComponent::heading("New Group Block");
-
-		let name_input = InputComponent {
+		let header = InputComponent {
 			label: Some("Name".to_string()),
 			name: Some("NAME".to_string()),
 			..InputComponent::default()
@@ -30,7 +28,6 @@ impl GroupBlock {
 		let items_input = TextComponent::info("You will be able to add blocks after creation.");
 
 		let mut main = StackComponent::vertical();
-		main.push(name_input);
 		main.push(desc_input);
 		main.push(items_input);
 
