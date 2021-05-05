@@ -56,7 +56,11 @@ impl GroupBlock {
 		let stack: DisplayComponent = if items.is_empty() {
 			TextComponent::info("No items in group").into()
 		} else {
-			StackComponent::new(items).into()
+			StackComponent {
+				items,
+				..StackComponent::masonry()
+			}
+			.into()
 		};
 		let mut content = StackComponent::vertical();
 
