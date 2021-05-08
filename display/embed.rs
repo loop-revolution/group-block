@@ -47,7 +47,7 @@ impl GroupBlock {
 		} else {
 			StackComponent {
 				items,
-				..StackComponent::masonry()
+				..StackComponent::fit()
 			}
 			.into()
 		};
