@@ -44,7 +44,7 @@ impl GroupBlock {
 					let block = Block::by_id(property.value_id, conn)?
 						.filter(|block| can_view(user_id, block));
 					if let Some(block) = block {
-						props.items.push(block);
+						props.items.push((block, property.id));
 					}
 				}
 				_ => {}
@@ -72,7 +72,7 @@ impl GroupBlock {
 				"item" => {
 					let block = Block::by_id(property.value_id, conn)?;
 					if let Some(block) = block {
-						props.items.push(block);
+						props.items.push((block, property.id));
 					}
 				}
 				_ => {}

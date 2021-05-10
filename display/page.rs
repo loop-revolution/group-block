@@ -12,11 +12,14 @@ use block_tools::{
 		component::{
 			atomic::{icon::Icon, text::TextComponent},
 			form::input::{InputComponent, InputSize},
-			layout::stack::StackComponent,
+			layout::{
+				card::{CardComponent, CardHeader, DetachedMenu},
+				stack::StackComponent,
+			},
 			menus::menu::{CustomMenuItem, MenuComponent},
 			DisplayComponent, WrappedComponent,
 		},
-		DisplayMeta, DisplayObject, PageMeta,
+		ActionObject, DisplayMeta, DisplayObject, PageMeta,
 	},
 	models::{Block, User},
 	LoopError,
@@ -48,16 +51,104 @@ impl GroupBlock {
 
 		let name_string = name.clone().and_then(|block| block.block_data);
 		let desc = description.clone().and_then(|block| block.block_data);
-		let items: Vec<WrappedComponent> = items
-			.into_iter()
-			.map(|block| WrappedComponent::from(delegate_embed_display(&block, context)))
-			.collect();
 
-		let stack: DisplayComponent = if items.is_empty() {
+		let mut wrapped_items = vec![];
+		for (item, property_id) in items {
+			let component = delegate_embed_display(&item, context);
+			if let DisplayComponent::Card(card) = component {
+				let remove_method = Self::build_remove_method_object(block.id, property_id);
+				let mut remove_item = CustomMenuItem::new("Remove this item", Icon::Minus);
+				remove_item.interact = Some(ActionObject::method(remove_method));
+				remove_item.listed = Some(true);
+				if let Some(header) = card.header {
+					if let Some(menu) = header.menu {
+						if let Some(custom) = menu.custom {
+							let mut custom = custom;
+							custom.push(remove_item);
+							wrapped_items.push(WrappedComponent::from(
+								CardComponent {
+									header: Some(CardHeader {
+										menu: Some(MenuComponent {
+											custom: Some(custom),
+											..menu
+										}),
+										..header
+									}),
+									..card
+								}
+								.into(),
+							));
+						} else {
+							let custom = vec![remove_item];
+							wrapped_items.push(WrappedComponent::from(
+								CardComponent {
+									header: Some(CardHeader {
+										menu: Some(MenuComponent {
+											custom: Some(custom),
+											..menu
+										}),
+										..header
+									}),
+									..card
+								}
+								.into(),
+							));
+						}
+					} else {
+						wrapped_items.push(WrappedComponent::from(
+							CardComponent {
+								header: Some(header),
+								..card
+							}
+							.into(),
+						));
+					}
+				} else if let Some(detached) = card.detached_menu {
+					if let Some(custom) = detached.menu.custom {
+						let mut custom = custom;
+						custom.push(remove_item);
+						wrapped_items.push(WrappedComponent::from(
+							CardComponent {
+								detached_menu: Some(DetachedMenu {
+									menu: MenuComponent {
+										custom: Some(custom),
+										..detached.menu
+									},
+									..detached
+								}),
+								..card
+							}
+							.into(),
+						));
+					} else {
+						let custom = vec![remove_item];
+						wrapped_items.push(WrappedComponent::from(
+							CardComponent {
+								detached_menu: Some(DetachedMenu {
+									menu: MenuComponent {
+										custom: Some(custom),
+										..detached.menu
+									},
+									..detached
+								}),
+								..card
+							}
+							.into(),
+						));
+					}
+				} else {
+					wrapped_items.push(WrappedComponent::from(card.into()));
+				}
+			} else {
+				wrapped_items.push(WrappedComponent::from(component));
+			}
+		}
+
+		let stack: DisplayComponent = if wrapped_items.is_empty() {
 			TextComponent::info("No items in group").into()
 		} else {
 			StackComponent {
-				items,
+				items: wrapped_items,
 				..StackComponent::masonry()
 			}
 			.into()

@@ -19,7 +19,7 @@ pub const BLOCK_NAME: &str = "group";
 pub struct GroupBlock {
 	pub name: Option<Block>,
 	pub description: Option<Block>,
-	pub items: Vec<Block>,
+	pub items: Vec<(Block, i64)>,
 }
 
 impl BlockType for GroupBlock {

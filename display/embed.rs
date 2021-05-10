@@ -4,14 +4,17 @@ use block_tools::{
 		permissions::{has_perm_level, PermLevel},
 	},
 	blocks::Context,
-	display_api::component::{
-		atomic::{icon::Icon, text::TextComponent},
-		layout::{
-			card::{CardComponent, CardHeader},
-			stack::StackComponent,
+	display_api::{
+		component::{
+			atomic::{icon::Icon, text::TextComponent},
+			layout::{
+				card::{CardComponent, CardHeader, DetachedMenu},
+				stack::StackComponent,
+			},
+			menus::menu::{CustomMenuItem, MenuComponent},
+			DisplayComponent, WrappedComponent,
 		},
-		menus::menu::{CustomMenuItem, MenuComponent},
-		DisplayComponent, WrappedComponent,
+		ActionObject,
 	},
 	models::Block,
 	LoopError,
@@ -37,16 +40,104 @@ impl GroupBlock {
 			.and_then(|block| block.block_data)
 			.unwrap_or_else(|| "Untitled Group".into());
 		let description = description.and_then(|block| block.block_data);
-		let items: Vec<WrappedComponent> = items
-			.iter()
-			.map(|block| WrappedComponent::from(delegate_embed_display(block, context)))
-			.collect();
 
-		let stack: DisplayComponent = if items.is_empty() {
+		let mut wrapped_items = vec![];
+		for (item, property_id) in items {
+			let component = delegate_embed_display(&item, context);
+			if let DisplayComponent::Card(card) = component {
+				let remove_method = Self::build_remove_method_object(block.id, property_id);
+				let mut remove_item = CustomMenuItem::new("Remove this item", Icon::Minus);
+				remove_item.interact = Some(ActionObject::method(remove_method));
+				remove_item.listed = Some(true);
+				if let Some(header) = card.header {
+					if let Some(menu) = header.menu {
+						if let Some(custom) = menu.custom {
+							let mut custom = custom;
+							custom.push(remove_item);
+							wrapped_items.push(WrappedComponent::from(
+								CardComponent {
+									header: Some(CardHeader {
+										menu: Some(MenuComponent {
+											custom: Some(custom),
+											..menu
+										}),
+										..header
+									}),
+									..card
+								}
+								.into(),
+							));
+						} else {
+							let custom = vec![remove_item];
+							wrapped_items.push(WrappedComponent::from(
+								CardComponent {
+									header: Some(CardHeader {
+										menu: Some(MenuComponent {
+											custom: Some(custom),
+											..menu
+										}),
+										..header
+									}),
+									..card
+								}
+								.into(),
+							));
+						}
+					} else {
+						wrapped_items.push(WrappedComponent::from(
+							CardComponent {
+								header: Some(header),
+								..card
+							}
+							.into(),
+						));
+					}
+				} else if let Some(detached) = card.detached_menu {
+					if let Some(custom) = detached.menu.custom {
+						let mut custom = custom;
+						custom.push(remove_item);
+						wrapped_items.push(WrappedComponent::from(
+							CardComponent {
+								detached_menu: Some(DetachedMenu {
+									menu: MenuComponent {
+										custom: Some(custom),
+										..detached.menu
+									},
+									..detached
+								}),
+								..card
+							}
+							.into(),
+						));
+					} else {
+						let custom = vec![remove_item];
+						wrapped_items.push(WrappedComponent::from(
+							CardComponent {
+								detached_menu: Some(DetachedMenu {
+									menu: MenuComponent {
+										custom: Some(custom),
+										..detached.menu
+									},
+									..detached
+								}),
+								..card
+							}
+							.into(),
+						));
+					}
+				} else {
+					wrapped_items.push(WrappedComponent::from(card.into()));
+				}
+			} else {
+				wrapped_items.push(WrappedComponent::from(component));
+			}
+		}
+
+		let stack: DisplayComponent = if wrapped_items.is_empty() {
 			TextComponent::info("No items in group").into()
 		} else {
 			StackComponent {
-				items,
+				items: wrapped_items,
 				..StackComponent::fit()
 			}
 			.into()
@@ -68,17 +159,17 @@ impl GroupBlock {
 			let mut menu = MenuComponent::from_block(block, user_id);
 			menu.load_comments(conn)?;
 			if has_perm_level(user_id, block, PermLevel::Edit) {
-				let action = Self::build_add_action_object(block.id);
-				let mut item = CustomMenuItem::new("Add a Block", Icon::Plus);
-				item.interact = Some(action);
-				menu.custom = Some(vec![item]);
+				let add_action = Self::build_add_action_object(block.id);
+				let mut add_item = CustomMenuItem::new("Add a Block", Icon::Plus);
+				add_item.interact = Some(add_action);
+				menu.custom = Some(vec![add_item]);
 			}
 			header.menu = Some(menu);
 		}
 
 		Ok(CardComponent {
 			color: block.color.clone(),
-			header: Some(box header),
+			header: Some(header),
 			..CardComponent::new(content)
 		}
 		.into())

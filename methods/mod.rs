@@ -2,6 +2,7 @@ use super::GroupBlock;
 use block_tools::{blocks::Context, models::Block, BlockError, LoopError};
 pub mod add;
 pub mod create;
+pub mod remove;
 pub mod root;
 pub mod visibility_update;
 use block_tools::blocks::BlockType;
@@ -15,6 +16,7 @@ impl GroupBlock {
 	) -> Result<Block, LoopError> {
 		match name.as_str() {
 			"add" => Self::add_method(context, block_id, args),
+			"remove" => Self::remove_method(context, block_id, args),
 			_ => Err(BlockError::MethodExist(name, GroupBlock::name()).into()),
 		}
 	}
