@@ -6,6 +6,7 @@ pub mod remove;
 pub mod root;
 pub mod visibility_update;
 use block_tools::blocks::BlockType;
+mod general_perm_update;
 
 impl GroupBlock {
 	pub fn handle_method_delegate(

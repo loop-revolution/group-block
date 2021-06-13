@@ -195,7 +195,7 @@ impl GroupBlock {
 				}
 			}
 			if let Some(mut menu) = page.menu.clone() {
-				if has_perm_level(user.id, &block, PermLevel::Edit) {
+				if has_perm_level(user.id, block, PermLevel::Edit) {
 					let action = Self::build_add_action_object(block.id);
 					let item = CustomMenuItem {
 						interact: Some(action),
